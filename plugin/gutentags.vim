@@ -4,46 +4,33 @@
 
 " Globals {{{
 
-if (&cp || get(g:, 'gutentags_dont_load', 0))
-    finish
-endif
+if (&cp || get(g:, 'gutentags_dont_load', 0))  | finish  | endif
 
-if v:version < 704
-    echoerr "gutentags: this plugin requires vim >= 7.4."
-    finish
-endif
-
-if !(has('job') || (has('nvim') && exists('*jobwait')))
-    echoerr "gutentags: this plugin requires the job API from Vim8 or Neovim."
-    finish
-endif
 
 let g:gutentags_debug = get(g:, 'gutentags_debug', 0)
 
-if (exists('g:loaded_gutentags') && !g:gutentags_debug)
-    finish
-endif
+if (exists('g:loaded_gutentags') && !g:gutentags_debug)  | finish  | endif
 if (exists('g:loaded_gutentags') && g:gutentags_debug)
     echom "Reloaded gutentags."
-endif
+en
 let g:loaded_gutentags = 1
 
-let g:gutentags_trace = get(g:, 'gutentags_trace', 0)
-let g:gutentags_fake = get(g:, 'gutentags_fake', 0)
-let g:gutentags_background_update = get(g:, 'gutentags_background_update', 1)
-let g:gutentags_pause_after_update = get(g:, 'gutentags_pause_after_update', 0)
-let g:gutentags_enabled = get(g:, 'gutentags_enabled', 1)
-let g:gutentags_modules = get(g:, 'gutentags_modules', ['ctags'])
+let g:gutentags_trace              = get(g:, 'gutentags_trace'              , 0)
+let g:gutentags_fake               = get(g:, 'gutentags_fake'               , 0)
+let g:gutentags_background_update  = get(g:, 'gutentags_background_update'  , 1)
+let g:gutentags_pause_after_update = get(g:, 'gutentags_pause_after_update' , 0)
+let g:gutentags_enabled            = get(g:, 'gutentags_enabled'            , 1)
+let g:gutentags_modules            = get(g:, 'gutentags_modules'            , ['ctags'])
 
-let g:gutentags_init_user_func = get(g:, 'gutentags_init_user_func', 
+let g:gutentags_init_user_func = get(g:, 'gutentags_init_user_func',
             \get(g:, 'gutentags_enabled_user_func', ''))
 
-let g:gutentags_add_ctrlp_root_markers = get(g:, 'gutentags_add_ctrlp_root_markers', 1)
-let g:gutentags_add_default_project_roots = get(g:, 'gutentags_add_default_project_roots', 1)
-let g:gutentags_project_root = get(g:, 'gutentags_project_root', [])
+let g:gutentags_add_ctrlp_root_markers    = get(g:, 'gutentags_add_ctrlp_root_markers'    , 1)
+let g:gutentags_add_default_project_roots = get(g:, 'gutentags_add_default_project_roots' , 1)
+let g:gutentags_project_root              = get(g:, 'gutentags_project_root'              , [])
 if g:gutentags_add_default_project_roots
     let g:gutentags_project_root += ['.git', '.hg', '.svn', '.bzr', '_darcs', '_FOSSIL_', '.fslckout']
-endif
+en
 
 let g:gutentags_project_root_finder = get(g:, 'gutentags_project_root_finder', '')
 
@@ -69,49 +56,43 @@ elseif !empty(g:gutentags_cache_dir)
     " strip any trailing slash.
     let g:gutentags_cache_dir = fnamemodify(g:gutentags_cache_dir, ':p')
     let g:gutentags_cache_dir = fnamemodify(g:gutentags_cache_dir, ':s?[/\\]$??')
-endif
+en
 
 let g:gutentags_define_advanced_commands = get(g:, 'gutentags_define_advanced_commands', 0)
 
 if g:gutentags_cache_dir != '' && !isdirectory(g:gutentags_cache_dir)
     call mkdir(g:gutentags_cache_dir, 'p')
-endif
+en
 
 if has('win32')
     let g:gutentags_plat_dir = expand('<sfile>:h:h:p') . "\\plat\\win32\\"
     let g:gutentags_res_dir = expand('<sfile>:h:h:p') . "\\res\\"
     let g:gutentags_script_ext = '.cmd'
-else
+el
     let g:gutentags_plat_dir = expand('<sfile>:h:h:p') . '/plat/unix/'
     let g:gutentags_res_dir = expand('<sfile>:h:h:p') . '/res/'
     let g:gutentags_script_ext = '.sh'
-endif
+en
 
 let g:__gutentags_vim_is_leaving = 0
 
 " }}}
 
-" Gutentags Setup {{{
 
-augroup gutentags_detect
-    autocmd!
-    autocmd BufNewFile,BufReadPost *  call gutentags#setup_gutentags()
-    autocmd VimEnter               *  if expand('<amatch>')==''|call gutentags#setup_gutentags()|endif
-    autocmd VimLeavePre            *  call gutentags#on_vim_leave_pre()
-augroup end
+aug  gutentags_detect
+    au!
+    au BufNewFile,BufReadPost *  call gutentags#setup_gutentags()
+    au VimEnter               *  if expand('<amatch>')==''|call gutentags#setup_gutentags()|endif
+    au VimLeavePre            *  call gutentags#on_vim_leave_pre()
+aug  end
 
-" }}}
+"\ cmd
+    if g:gutentags_define_advanced_commands
+        com!  GutentagsToggleEnabled :let g:gutentags_enabled=!g:gutentags_enabled
+        com!  GutentagsToggleTrace   :call gutentags#toggletrace()
+    en
 
-" Toggles and Miscellaneous Commands {{{
-
-if g:gutentags_define_advanced_commands
-    command! GutentagsToggleEnabled :let g:gutentags_enabled=!g:gutentags_enabled
-    command! GutentagsToggleTrace   :call gutentags#toggletrace()
-endif
-
-if g:gutentags_debug
-    command! GutentagsToggleFake    :call gutentags#fake()
-endif
-
-" }}}
+    if g:gutentags_debug
+        com!  GutentagsToggleFake    :call gutentags#fake()
+    en
 

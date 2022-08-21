@@ -2,9 +2,9 @@
 
 " Global Options {{{
 
-let g:gutentags_ctags_executable = get(g:, 'gutentags_ctags_executable', 'ctags')
-let g:gutentags_ctags_tagfile = get(g:, 'gutentags_ctags_tagfile', 'tags')
-let g:gutentags_ctags_auto_set_tags = get(g:, 'gutentags_ctags_auto_set_tags', 1)
+let g:gutentags_ctags_executable    = get(g:, 'gutentags_ctags_executable'    , 'ctags')
+let g:gutentags_ctags_tagfile       = get(g:, 'gutentags_ctags_tagfile'       , 'tags')
+let g:gutentags_ctags_auto_set_tags = get(g:, 'gutentags_ctags_auto_set_tags' , 1)
 
 let g:gutentags_ctags_options_file = get(g:, 'gutentags_ctags_options_file', '.gutctags')
 let g:gutentags_ctags_check_tagfile = get(g:, 'gutentags_ctags_check_tagfile', 0)
@@ -17,9 +17,9 @@ let g:gutentags_ctags_exclude_wildignore = get(g:, 'gutentags_ctags_exclude_wild
 " Backwards compatibility.
 function! s:_handleOldOptions() abort
     let l:renamed_options = {
-                \'gutentags_exclude': 'gutentags_ctags_exclude',
-                \'gutentags_tagfile': 'gutentags_ctags_tagfile',
-                \'gutentags_auto_set_tags': 'gutentags_ctags_auto_set_tags'
+                \'gutentags_exclude'       :  'gutentags_ctags_exclude',
+                \'gutentags_tagfile'       :  'gutentags_ctags_tagfile',
+                \'gutentags_auto_set_tags' :  'gutentags_ctags_auto_set_tags'
                 \}
     for key in keys(l:renamed_options)
         if exists('g:'.key)
@@ -43,11 +43,18 @@ let s:last_wildignores = ''
 
 function! gutentags#ctags#init(project_root) abort
     " Figure out the path to the tags file.
-    " Check the old name for this option, too, before falling back to the
-    " globally defined name.
-    let l:tagfile = getbufvar("", 'gutentags_ctags_tagfile',
-                \getbufvar("", 'gutentags_tagfile', 
-                \g:gutentags_ctags_tagfile))
+    " Check the old name for this option, too,
+        " before falling back to the  globally defined name.
+    let l:tagfile = getbufvar(
+                      \ "",
+                      \ 'gutentags_ctags_tagfile',
+                      \ getbufvar(
+                                \ "",
+                                \ 'gutentags_tagfile',
+                                \ g:gutentags_ctags_tagfile,
+                               \ ),
+                     \ )
+
     let b:gutentags_files['ctags'] = gutentags#get_cachefile(
                 \a:project_root, l:tagfile)
 
@@ -57,7 +64,12 @@ function! gutentags#ctags#init(project_root) abort
             execute 'setlocal tags^=' . fnameescape(b:gutentags_files['ctags'])
         else
             " spaces must be literally escaped in tags path
-            let l:literal_space_escaped = substitute(fnameescape(b:gutentags_files['ctags']), '\ ', '\\\\ ', 'g')
+            let l:literal_space_escaped = substitute(
+                                               \ fnameescape(b:gutentags_files['ctags']),
+                                               \ '\ ',
+                                               \ '\\\\ ',
+                                               \ 'g',
+                                            \ )
             execute 'setlocal tags^=' . l:literal_space_escaped
         endif
     endif
@@ -92,7 +104,7 @@ function! gutentags#ctags#generate(proj_dir, tags_file, gen_opts) abort
         endif
     endif
 
-    " Get a tags file path relative to the current directory, which 
+    " Get a tags file path relative to the current directory, which
     " happens to be the project root in this case.
     " Since the given tags file path is absolute, and since Vim won't
     " change the path if it is not inside the current directory, we
@@ -104,37 +116,44 @@ function! gutentags#ctags#generate(proj_dir, tags_file, gen_opts) abort
     let l:use_tag_relative_opt = 0
 
     if empty(g:gutentags_cache_dir) && l:tags_file_is_local
-        " If we don't use the cache directory, we can pass relative paths
-        " around.
+        " If we don't use the cache directory,
+        " we can pass relative paths  around.
         "
-        " Note that if we don't do this and pass a full path for the project
-        " root, some `ctags` implementations like Exhuberant Ctags can get
-        " confused if the paths have spaces -- but not if you're *in* the root 
-        " directory, for some reason... (which will be the case, we're running
-        " the jobs from the project root).
-        let l:actual_proj_dir = '.'
+        " if we don't do this and
+        " pass a full path for the project  root,
+        " some `ctags` implementations like Exhuberant Ctags can get  confused
+        " if the paths have spaces --
+            " but not if you're *in* the root  directory,
+            " for some reason...
+            " (which will be the case,
+            " we're running  the jobs from the project root).
+        let l:actual_proj_dir  = '.'
         let l:actual_tags_file = l:tags_file_relative
 
         let l:tags_file_dir = fnamemodify(l:actual_tags_file, ':h')
         if l:tags_file_dir != '.'
-            " Ok so now the tags file is stored in a subdirectory of the 
-            " project root, instead of at the root. This happens if, say,
-            " someone set `gutentags_ctags_tagfile` to `.git/tags`, which
-            " seems to be fairly popular.
+            " Ok so now the tags file
+            " is stored in a subdirectory of the  project root,
+                " instead of at the root.
+            " This happens if, say,
+            " someone set `gutentags_ctags_tagfile` to `.git/tags`,
+            " which  seems to be fairly popular.
             "
-            " By default, `ctags` writes paths relative to the current 
-            " directory (the project root) but in this case we need it to
-            " be relative to the tags file (e.g. adding `../` in front of
-            " everything if the tags file is `.git/tags`).
+            " By default,
+                " `ctags` writes paths relative to the current  directory
+                " (the project root)
+                " but in this case we need it to
+                    " be relative to the tags file (e.g. adding `../` in front of  everything
+                    " if the tags file is `.git/tags`).
             "
             " Thankfully most `ctags` implementations support an option
             " just for this.
             let l:use_tag_relative_opt = 1
         endif
     else
-        " else: the tags file goes in a cache directory, so we need to specify
-        " all the paths absolutely for `ctags` to do its job correctly.
-        let l:actual_proj_dir = a:proj_dir
+        " else: the tags file goes in a cache directory,
+        " so we need to specify  all the paths absolutely for `ctags` to do its job correctly.
+        let l:actual_proj_dir  = a:proj_dir
         let l:actual_tags_file = a:tags_file
     endif
 
@@ -226,14 +245,16 @@ endfunction
 
 " Utilities {{{
 
-" Get final ctags executable depending whether a filetype one is defined
+" Get final ctags executable
+" depending whether a filetype one is defined
 function! s:get_ctags_executable(proj_dir) abort
-    "Only consider the main filetype in cases like 'python.django'
-    let l:ftype = get(split(&filetype, '\.'), 0, '')
+    " Only consider the main filetype in cases like 'python.django'
+    let l:ftype     = get(split(&filetype, '\.'), 0, '')
     let l:proj_info = gutentags#get_project_info(a:proj_dir)
-    let l:type = get(l:proj_info, 'type', l:ftype)
+    let l:type      = get(l:proj_info, 'type', l:ftype)
     let exepath = exists('g:gutentags_ctags_executable_{l:type}')
-        \ ? g:gutentags_ctags_executable_{l:type} : g:gutentags_ctags_executable
+                \ ? g:gutentags_ctags_executable_{l:type}
+                \ : g:gutentags_ctags_executable
     return expand(exepath, 1)
 endfunction
 
@@ -248,7 +269,7 @@ function! s:generate_wildignore_options() abort
         if empty(g:gutentags_cache_dir)
             let s:wildignores_options_path = tempname()
         else
-            let s:wildignores_options_path = 
+            let s:wildignores_options_path =
                         \gutentags#stripslash(g:gutentags_cache_dir).
                         \'/_wildignore.options'
         endif

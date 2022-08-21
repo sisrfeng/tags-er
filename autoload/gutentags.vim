@@ -98,9 +98,9 @@ function! gutentags#validate_cmd(cmd) abort
     return ""
 endfunction
 
-" Makes an appropriate command line for use with `job_start` by converting
-" a list of possibly quoted arguments into a single string on Windows, or
-" into a list of unquoted arguments on Unix/Mac.
+" Makes an appropriate command line for use with `job_start` by
+" converting  a list of possibly quoted arguments into a single string on Windows,
+" or  into a list of unquoted arguments on Unix/Mac.
 if has('win32') || has('win64')
     function! gutentags#make_args(cmd) abort
         return join(a:cmd, ' ')
@@ -109,12 +109,13 @@ else
     function! gutentags#make_args(cmd) abort
         let l:outcmd = []
         for cmdarg in a:cmd
-            " Thanks Vimscript... you can use negative integers for strings
-            " in the slice notation, but not for indexing characters :(
+            " you can use negative integers for ¿strings¿  in the slice notation,
+            " but not for indexing ¿characters¿ :(
             let l:arglen = strlen(cmdarg)
-            if (cmdarg[0] == '"' && cmdarg[l:arglen - 1] == '"') || 
+            if (cmdarg[0] == '"' && cmdarg[l:arglen - 1] == '"') ||
                         \(cmdarg[0] == "'" && cmdarg[l:arglen - 1] == "'")
-                " This was quoted, so there are probably things to escape.
+                " This was quoted,
+                " so there are probably things to escape.
                 let l:escapedarg = cmdarg[1:-2] " substitute(cmdarg[1:-2], '\ ', '\\ ', 'g')
                 call add(l:outcmd, l:escapedarg)
             else
@@ -242,23 +243,20 @@ endfunction
 
 " Setup gutentags for the current buffer.
 function! gutentags#setup_gutentags() abort
-    if exists('b:gutentags_files') && !g:gutentags_debug
-        " This buffer already has gutentags support.
-        return
-    endif
+    " This buffer already has gutentags support.
+    if exists('b:gutentags_files') && !g:gutentags_debug  | return  | endif
 
     " Don't setup gutentags for anything that's not a normal buffer
-    " (so don't do anything for help buffers and quickfix windows and
-    "  other such things)
+    " (so don't do anything for help buffers and quickfix windows and  other such things)
     " Also don't do anything for the default `[No Name]` buffer you get
-    " after starting Vim.
-    if &buftype != '' || 
+        " after starting Vim.
+    if &buftype != '' ||
           \(bufname('%') == '' && !g:gutentags_generate_on_empty_buffer)
         return
     endif
 
-    " Don't setup gutentags for things that don't need it, or that could
-    " cause problems.
+    " Don't setup gutentags for things that don't need it,
+    " or that could  cause problems.
     if index(g:gutentags_exclude_filetypes, &filetype) >= 0
         return
     endif
@@ -311,7 +309,8 @@ function! gutentags#setup_gutentags() abort
         return
     endtry
 
-    " We know what tags file to manage! Now set things up.
+    " We know what tags file to manage!
+    " Now set things up.
     call gutentags#trace("Setting gutentags for buffer '".bufname('%')."'")
 
     " Autocommands for updating the tags on save.
@@ -502,10 +501,10 @@ function! s:update_tags(bufno, module, write_mode, queue_mode) abort
                 endif
             endfor
             if l:needs_queuing
-                call add(s:update_queue[a:module], 
+                call add(s:update_queue[a:module],
                             \[l:tags_file, a:bufno, a:write_mode])
             endif
-            call gutentags#trace("Tag file '" . l:tags_file . 
+            call gutentags#trace("Tag file '" . l:tags_file .
                         \"' is already being updated. Queuing it up...")
         elseif a:queue_mode == 1
             call gutentags#trace("Tag file '" . l:tags_file .
